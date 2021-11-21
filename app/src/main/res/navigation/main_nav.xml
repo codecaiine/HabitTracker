@@ -8,16 +8,31 @@
     <fragment
         android:id="@+id/habitList"
         android:name="com.example.habittracker.habitList"
-        android:label="fragment_habit_list"
-        tools:layout="@layout/fragment_habit_list" />
+        android:label="Habits"
+        tools:layout="@layout/fragment_habit_list" >
+        <action
+            android:id="@+id/action_habitList_to_createHabitItem"
+            app:destination="@id/createHabitItem" />
+        <action
+            android:id="@+id/action_habitList_to_updateHabitItem"
+            app:destination="@id/updateHabitItem" />
+    </fragment>
     <fragment
         android:id="@+id/createHabitItem"
         android:name="com.example.habittracker.CreateHabitItem"
-        android:label="fragment_create_habit_item"
-        tools:layout="@layout/fragment_create_habit_item" />
+        android:label="Create Habit"
+        tools:layout="@layout/fragment_create_habit_item" >
+        <action
+            android:id="@+id/action_createHabitItem_to_habitList2"
+            app:destination="@id/habitList" />
+    </fragment>
     <fragment
         android:id="@+id/updateHabitItem"
         android:name="com.example.habittracker.UpdateHabitItem"
-        android:label="fragment_update_habit_item"
-        tools:layout="@layout/fragment_update_habit_item" />
+        android:label="Update Habit"
+        tools:layout="@layout/fragment_update_habit_item" >
+        <action
+            android:id="@+id/action_updateHabitItem_to_habitList"
+            app:destination="@id/habitList" />
+    </fragment>
 </navigation>
