@@ -1,1 +1,6 @@
-# HabitTracker
+# Habit Tracker
+
+## Built with
+
+- Kotlin
+- Android
