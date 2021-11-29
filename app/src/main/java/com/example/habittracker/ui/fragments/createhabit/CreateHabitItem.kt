@@ -1,59 +1,157 @@
 package com.example.habittracker
-
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
+import android.os.Build
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
+import android.util.Log
 import android.view.View
-import android.view.ViewGroup
+import android.widget.DatePicker
+import android.widget.TimePicker
+import android.widget.Toast
+import androidx.annotation.RequiresApi
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
+import com.example.habittracker.R
+import com.example.habittracker.data.models.Habit
+import com.example.habittracker.logic.utils.Calculations
+import com.example.habittracker.ui.viewmodels.HabitViewModel
+import kotlinx.android.synthetic.main.fragment_create_habit_item.*
+import java.util.*
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
+class CreateHabitItem : Fragment(R.layout.fragment_create_habit_item),
+    TimePickerDialog.OnTimeSetListener, DatePickerDialog.OnDateSetListener {
 
-/**
- * A simple [Fragment] subclass.
- * Use the [CreateHabitItem.newInstance] factory method to
- * create an instance of this fragment.
- */
-class CreateHabitItem : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
+    private var title = ""
+    private var description = ""
+    private var drawableSelected = 0
+    private var timeStamp = ""
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
+    private lateinit var habitViewModel: HabitViewModel
+
+    private var day = 0
+    private var month = 0
+    private var year = 0
+    private var hour = 0
+    private var minute = 0
+
+    private var cleanDate = ""
+    private var cleanTime = ""
+
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+
+        habitViewModel = ViewModelProvider(this).get(HabitViewModel::class.java)
+
+        //Add habit to database
+        btn_confirm.setOnClickListener {
+            addHabitToDB()
+        }
+        //Pick a date and time
+        pickDateAndTime()
+
+        //Selected and image to put into our list
+        drawableSelected()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    //set on click listeners for our data and time pickers
+    private fun pickDateAndTime() {
+        btn_pickDate.setOnClickListener {
+            getDateCalendar()
+            DatePickerDialog(requireContext(), this, year, month, day).show()
+        }
+
+        btn_pickTime.setOnClickListener {
+            getTimeCalendar()
+            TimePickerDialog(context, this, hour, minute, true).show()
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_create_habit_item, container, false)
+    private fun addHabitToDB() {
+
+        //Get text from editTexts
+        title = et_habitTitle.text.toString()
+        description = et_habitDescription.text.toString()
+
+        //Create a timestamp string for our recyclerview
+        timeStamp = "$cleanDate $cleanTime"
+
+        //Check that the form is complete before submitting data to the database
+        if (!(title.isEmpty() || description.isEmpty() || timeStamp.isEmpty() || drawableSelected == 0)) {
+            val habit = Habit(0, title, description, timeStamp, drawableSelected)
+
+            //add the habit if all the fields are filled
+            habitViewModel.addHabit(habit)
+            Toast.makeText(context, "Habit created successfully!", Toast.LENGTH_SHORT).show()
+
+            //navigate back to our home fragment
+            findNavController().navigate(R.id.action_createHabitItem_to_habitList)
+        } else {
+            Toast.makeText(context, "Please fill all the fields", Toast.LENGTH_SHORT).show()
+        }
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment CreateHabitItem.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            CreateHabitItem().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
-            }
+    // Create a selector for our icons which will appear in the recycler view
+    private fun drawableSelected() {
+        iv_fastFoodSelected.setOnClickListener {
+            iv_fastFoodSelected.isSelected = !iv_fastFoodSelected.isSelected
+            drawableSelected = R.drawable.ic_fastfood
+
+            //de-select the other options when we pick an image
+            iv_smokingSelected.isSelected = false
+            iv_teaSelected.isSelected = false
+        }
+
+        iv_smokingSelected.setOnClickListener {
+            iv_smokingSelected.isSelected = !iv_smokingSelected.isSelected
+            drawableSelected = R.drawable.ic_smoking2
+
+            //de-select the other options when we pick an image
+            iv_fastFoodSelected.isSelected = false
+            iv_teaSelected.isSelected = false
+        }
+
+        iv_teaSelected.setOnClickListener {
+            iv_teaSelected.isSelected = !iv_teaSelected.isSelected
+            drawableSelected = R.drawable.ic_tea
+
+            //de-select the other options when we pick an image
+            iv_fastFoodSelected.isSelected = false
+            iv_smokingSelected.isSelected = false
+        }
+
     }
+
+    //get the time set
+    override fun onTimeSet(TimePicker: TimePicker?, p1: Int, p2: Int) {
+        Log.d("Fragment", "Time: $p1:$p2")
+
+        cleanTime = Calculations.cleanTime(p1, p2)
+        tv_timeSelected.text = "Time: $cleanTime"
+    }
+
+    //get the date set
+    override fun onDateSet(p0: DatePicker?, yearX: Int, monthX: Int, dayX: Int) {
+
+        cleanDate = Calculations.cleanDate(dayX, monthX, yearX)
+        tv_dateSelected.text = "Date: $cleanDate"
+    }
+
+    //get the current time
+    private fun getTimeCalendar() {
+        val cal = Calendar.getInstance()
+        hour = cal.get(Calendar.HOUR_OF_DAY)
+        minute = cal.get(Calendar.MINUTE)
+    }
+
+    //get the current date
+    private fun getDateCalendar() {
+        val cal = Calendar.getInstance()
+        day = cal.get(Calendar.DAY_OF_MONTH)
+        month = cal.get(Calendar.MONTH)
+        year = cal.get(Calendar.YEAR)
+    }
+
 }
