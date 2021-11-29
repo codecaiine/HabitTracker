@@ -1,4 +1,5 @@
 # Habit Tracker
+Simple android app 
 
 
 ## Built with 
